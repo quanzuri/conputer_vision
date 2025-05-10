@@ -6,19 +6,35 @@ import cv2
 import os
 import uuid
 
-app = Flask(__name__)
-UPLOAD_FOLDER = "age_gender_api/age_gender_web/static/uploads"
+# ✅ Đường dẫn tuyệt đối
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# ✅ Cấu hình Flask, tự nhận templates & static
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static")
+)
+
+# ✅ Cấu hình thư mục lưu ảnh
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-# Load models
-model_age = load_model("age_gender_api/model_age.h5")
-model_gender = load_model("age_gender_api/model_gender.h5")
+
+# ✅ Load models (ở thư mục cha của app.py)
+model_age = load_model(os.path.join(BASE_DIR, "..", "model_age.h5"))
+model_gender = load_model(os.path.join(BASE_DIR, "..", "model_gender.h5"))
+
+# ✅ Load bộ cascade nhận diện khuôn mặt
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
+# ✅ Hàm xử lý ảnh
 def preprocess(image):
     image = cv2.resize(image, (200, 200))
     image = image.astype("float32") / 255.0
     return np.expand_dims(image, axis=0)
 
+# ✅ Route chính
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
@@ -48,16 +64,18 @@ def index():
                 cv2.putText(img, f"{gender}, {age}", (x, y-10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
-            # Save annotated image
+            # Ghi lại ảnh
             cv2.imwrite(filepath, img)
 
             return render_template("index.html", filename=filename, results=results)
 
     return render_template("index.html")
 
-@app.route("/age_gender_api/age_gender_web/static/uploads/<filename>")
-def send_file(filename):
+# ✅ Route để xem ảnh (nếu cần, nhưng Flask đã phục vụ static mặc định)
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
     return redirect(url_for('static', filename=f"uploads/{filename}"))
 
+# ✅ Khởi chạy ứng dụng
 if __name__ == "__main__":
     app.run(debug=False, host="0.0.0.0", port=10000)
