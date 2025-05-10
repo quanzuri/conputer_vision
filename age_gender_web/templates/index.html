@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Age & Gender Detection Web</title>
+</head>
+<body>
+    <h2>🧠 Upload Image for Age & Gender Detection</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="image" accept="image/*" required>
+        <button type="submit">Predict</button>
+    </form>
+
+    {% if filename %}
+        <h3>Result:</h3>
+        <img src="{{ url_for('static', filename='uploads/' + filename) }}" width="400">
+        <ul>
+            {% for r in results %}
+                <li>{{ r }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
