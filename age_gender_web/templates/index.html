@@ -1,23 +1,74 @@
+<!-- templates/index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Age & Gender Detection Web</title>
+  <meta charset="UTF-8">
+  <title>Age & Gender Detection</title>
+  <script>
+    function switchMode(mode) {
+      document.getElementById('upload_input').style.display = mode === 'upload' ? 'block' : 'none';
+      document.getElementById('url_input').style.display = mode === 'url' ? 'block' : 'none';
+      document.getElementById('camera_input').style.display = mode === 'camera' ? 'block' : 'none';
+    }
+
+    function capture() {
+      const video = document.getElementById('camera');
+      const canvas = document.getElementById('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0);
+      document.getElementById('image_base64').value = canvas.toDataURL('image/jpeg');
+    }
+
+    window.onload = () => {
+      const radios = document.getElementsByName('mode');
+      radios.forEach(radio => {
+        radio.onclick = () => switchMode(radio.value);
+      });
+      switchMode(document.querySelector('input[name="mode"]:checked').value);
+      if (navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+          document.getElementById('camera').srcObject = stream;
+        });
+      }
+    }
+  </script>
 </head>
 <body>
-    <h2>🧠 Upload Image for Age & Gender Detection</h2>
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="image" accept="image/*" required>
-        <button type="submit">Predict</button>
-    </form>
+  <h1>🧠 Age & Gender Detection</h1>
+  <form method="POST" enctype="multipart/form-data">
+    <label><input type="radio" name="mode" value="upload" checked> Upload Image</label>
+    <label><input type="radio" name="mode" value="url"> Image URL</label>
+    <label><input type="radio" name="mode" value="camera"> Webcam</label>
 
-    {% if filename %}
-        <h3>Result:</h3>
-        <img src="{{ url_for('static', filename='uploads/' + filename) }}" width="400">
-        <ul>
-            {% for r in results %}
-                <li>{{ r }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+    <div id="upload_input">
+      <input type="file" name="image">
+    </div>
+
+    <div id="url_input" style="display:none;">
+      <input type="text" name="image_url" placeholder="Paste image URL here">
+    </div>
+
+    <div id="camera_input" style="display:none;">
+      <video id="camera" autoplay></video>
+      <br>
+      <button type="button" onclick="capture()">📸 Capture</button>
+      <input type="hidden" name="image_base64" id="image_base64">
+      <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+
+    <br><button type="submit">🔍 Analyze</button>
+  </form>
+
+  {% if filename %}
+    <h3>Results:</h3>
+    <img src="{{ url_for('static', filename='uploads/' + filename) }}" width="400">
+    <ul>
+      {% for r in results %}
+        <li>{{ r }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
 </body>
 </html>
