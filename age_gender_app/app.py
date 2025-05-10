@@ -6,8 +6,8 @@ import numpy as np
 from tensorflow.keras.models import load_model
 
 # Load mô hình
-model_age = load_model("age_gender_api/model_age.h5")
-model_gender = load_model("age_gender_api/model_gender.h5")
+model_age = load_model("model_gender.h5")
+model_gender = load_model("model_gender.h5")
 
 # Phát hiện khuôn mặt
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
