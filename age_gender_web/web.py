@@ -8,6 +8,7 @@ import uuid
 import base64
 import requests
 from io import BytesIO
+import mediapipe as mp
 
 app = Flask(
     __name__,
@@ -22,12 +23,29 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 model_age = load_model(os.path.join(BASE_DIR, "..", "model_age.h5"))
 model_gender = load_model(os.path.join(BASE_DIR, "..", "model_gender.h5"))
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+
+mp_face_detection = mp.solutions.face_detection
+face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
 
 def preprocess(image):
     image = cv2.resize(image, (200, 200))
     image = image.astype("float32") / 255.0
     return np.expand_dims(image, axis=0)
+
+def detect_faces(image):
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = face_detection.process(image_rgb)
+    boxes = []
+    if results.detections:
+        ih, iw, _ = image.shape
+        for detection in results.detections:
+            bbox = detection.location_data.relative_bounding_box
+            x = int(bbox.xmin * iw)
+            y = int(bbox.ymin * ih)
+            w = int(bbox.width * iw)
+            h = int(bbox.height * ih)
+            boxes.append((x, y, w, h))
+    return boxes
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -71,8 +89,7 @@ def index():
                 cv2.imwrite(filepath, image)
 
         if image is not None:
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.1, 5)
+            faces = detect_faces(image)
 
             for (x, y, w, h) in faces:
                 face_img = image[y:y+h, x:x+w]
@@ -104,15 +121,13 @@ def realtime():
         image_pil = Image.open(BytesIO(data)).convert("RGB")
         image = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
 
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.1, 5)
+        faces = detect_faces(image)
 
         results = []
         for (x, y, w, h) in faces:
             face_img = image[y:y+h, x:x+w]
             if face_img.shape[0] < 50 or face_img.shape[1] < 50:
                 continue
-
             input_face = preprocess(face_img)
             age = int(model_age.predict(input_face)[0][0])
             gender_score = model_gender.predict(input_face)[0][0]
@@ -134,8 +149,7 @@ def generate_video():
         if not success:
             break
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.1, 5)
+        faces = detect_faces(frame)
 
         for (x, y, w, h) in faces:
             face_img = frame[y:y+h, x:x+w]
