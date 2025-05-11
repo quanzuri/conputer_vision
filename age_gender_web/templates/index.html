@@ -1,74 +1,492 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Age & Gender Detection</title>
-  <script>
-    function switchMode(mode) {
-      document.getElementById('upload_input').style.display = mode === 'upload' ? 'block' : 'none';
-      document.getElementById('url_input').style.display = mode === 'url' ? 'block' : 'none';
-      document.getElementById('camera_input').style.display = mode === 'camera' ? 'block' : 'none';
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg,rgb(201, 196, 207),rgb(44, 19, 79));
+      color: #333;
     }
-
-    function capture() {
-      const video = document.getElementById('camera');
-      const canvas = document.getElementById('canvas');
-      const context = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0);
-      document.getElementById('image_base64').value = canvas.toDataURL('image/jpeg');
+    .navbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      background:rgb(65, 59, 90);
+      color: white;
+      padding: 15px 30px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-
-    window.onload = () => {
-      const radios = document.getElementsByName('mode');
-      radios.forEach(radio => {
-        radio.onclick = () => switchMode(radio.value);
-      });
-      switchMode(document.querySelector('input[name="mode"]:checked').value);
-      if (navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-          document.getElementById('camera').srcObject = stream;
-        });
+    .navbar h1 {
+      margin: 0;
+      font-size: 24px;
+      position: absolute;
+      left: 30px;
+    }
+    .navbar ul {
+      list-style: none;
+      display: flex;
+      margin: 0;
+      padding: 0;
+    }
+    .navbar .menu-right li {
+      margin-left: 20px;
+    }
+    .navbar ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+    }
+    .menu-right li {
+      display: inline-block;
+      margin-left: 10px;
+    }
+    .flag-icon {
+      width: 20px;
+      height: auto;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    .btn-login, .btn-register {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-register {
+      background-color: #28a745;
+    }
+    .btn-login:hover, .btn-register:hover {
+      opacity: 0.9;
+    }
+    .main-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      margin: 40px auto;
+      flex-wrap: wrap;
+      max-width: 1200px;
+    }
+    .slider {
+      position: relative;
+      width: 700px;
+      height: 450px;
+      overflow: hidden;
+      border-radius: 16px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .slides {
+      display: flex;
+      transition: transform 0.5s ease-in-out;
+      height: 100%;
+    }
+    .slide {
+      min-width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .prev, .next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      font-size: 24px;
+      padding: 10px 15px;
+      cursor: pointer;
+      border-radius: 50%;
+      z-index: 10;
+    }
+    .next {
+      right: 15px;
+    }
+    .prev {
+      left: 15px;
+    }
+    .container {
+      width: 400px;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    video {
+      width: 100%;
+      margin-top: 15px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: #000;
+      position: relative;
+      z-index: 1;
+    }
+    canvas#overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .result-wrapper {
+      position: relative;
+      min-height: 300px;
+      margin-bottom: 20px;
+    }
+    .image-placeholder {
+      text-align: center;
+      padding: 20px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 15px;
+    }
+    .image-placeholder:hover {
+      background: #e0e0e0;
+    }
+    .image-placeholder img {
+      max-width: 100px;
+      margin: 10px auto;
+    }
+    .image-placeholder p {
+      margin-top: 10px;
+      color: #666;
+    }
+    .result-img {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      display: none;
+    }
+    .results-container {
+      display: none;
+      text-align: left;
+    }
+    .results-container h3 {
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .results-list {
+      list-style-type: none;
+      padding: 0;
+    }
+    .results-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .error-message {
+      color: #dc3545;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    @media (max-width: 768px) {
+      .main-section {
+        flex-direction: column;
+        align-items: center;
+      }
+      .slider {
+        width: 100%;
+        height: 300px;
+      }
+      .container {
+        width: 90%;
       }
     }
-  </script>
+  </style>
 </head>
 <body>
+<div class="navbar">
   <h1>🧠 Age & Gender Detection</h1>
-  <form method="POST" enctype="multipart/form-data">
-    <label><input type="radio" name="mode" value="upload" checked> Upload Image</label>
-    <label><input type="radio" name="mode" value="url"> Image URL</label>
-    <label><input type="radio" name="mode" value="camera"> Webcam</label>
+  <ul class="menu-right">
+    <li><a href="#">Trang chủ</a></li>
+    <li>
+      <a href="#">
+        <img src="{{ url_for('static', filename='images/viet-nam.png') }}" alt="Vietnam Flag" class="flag-icon">
+        Tiếng Việt
+      </a>
+    </li>
+    <li>
+      <button class="btn-login">Đăng nhập</button>
+    </li>
+    <li>
+      <button class="btn-register">Đăng kí</button>
+    </li>
+  </ul>
+</div>
 
-    <div id="upload_input">
-      <input type="file" name="image">
+<div class="main-section">
+  <div class="slider">
+    <div class="slides">
+      <div class="slide"><img src="{{ url_for('static', filename='images/1.jpg') }}"></div>
+      <div class="slide"><img src="{{ url_for('static', filename='images/2.jpg') }}"></div>
+      <div class="slide"><img src="{{ url_for('static', filename='images/3.jpg') }}"></div>
+      <div class="slide"><img src="{{ url_for('static', filename='images/4.jpg') }}"></div>
     </div>
+    <button class="prev" onclick="moveSlide(-1)">❮</button>
+    <button class="next" onclick="moveSlide(1)">❯</button>
+  </div> 
 
-    <div id="url_input" style="display:none;">
-      <input type="text" name="image_url" placeholder="Paste image URL here">
+  <div class="container">
+    <h2>🔍 Detect Age & Gender</h2>
+    <form method="POST" enctype="multipart/form-data" id="detectionForm">
+      <div class="input-mode">
+        <label><input type="radio" name="mode" value="upload" checked> Upload Image</label>
+        <label><input type="radio" name="mode" value="url"> Image URL</label>
+        <label><input type="radio" name="mode" value="camera"> Webcam</label>
+      </div>
+
+      <div class="result-wrapper">
+        <!-- Upload Input -->
+        <div id="upload_input">
+          <div id="upload-placeholder" class="image-placeholder">
+            <img src="{{ url_for('static', filename='images/image-gallery.png') }}" alt="Upload image">
+            <p>Upload your image here</p>
+          </div>
+          <input type="file" name="image" accept="image/*" id="file-input">
+          <img id="upload-result" class="result-img">
+          <div id="upload-results" class="results-container">
+            <h3>Results:</h3>
+            <ul class="results-list"></ul>
+          </div>
+        </div>
+
+        <!-- URL Input -->
+        <div id="url_input" style="display:none;">
+          <div id="url-placeholder" class="image-placeholder">
+            <img src="{{ url_for('static', filename='images/image-gallery.png') }}" alt="Paste URL">
+            <p>Paste image URL here</p>
+          </div>
+          <input type="text" name="image_url" placeholder="Paste image URL here" id="url-input">
+          <img id="url-result" class="result-img">
+          <div id="url-results" class="results-container">
+            <h3>Results:</h3>
+            <ul class="results-list"></ul>
+          </div>
+        </div>
+
+        <!-- Camera Input -->
+        <div id="camera_input" style="display:none;">
+          <div style="position: relative;">
+            <video id="camera" autoplay playsinline></video>
+            <canvas id="overlay"></canvas>
+          </div>
+          <canvas id="canvas" style="display:none;"></canvas>
+          <input type="hidden" name="image_base64" id="image_base64">
+          <img id="camera-result" class="result-img">
+          <div id="camera-results" class="results-container">
+            <h3>Results:</h3>
+            <ul class="results-list"></ul>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" id="analyzeBtn">Analyze</button>
+    </form>
+
+    <div id="realtime_results" style="display:none;">
+      <h3>Real-time Analysis:</h3>
+      <ul class="results-list"></ul>
     </div>
+    <div id="error_message" class="error-message" style="display:none;"></div>
+  </div>
+</div>
 
-    <div id="camera_input" style="display:none;">
-      <video id="camera" autoplay></video>
-      <br>
-      <button type="button" onclick="capture()">📸 Capture</button>
-      <input type="hidden" name="image_base64" id="image_base64">
-      <canvas id="canvas" style="display:none;"></canvas>
-    </div>
+<div style="text-align: left; padding: 25px 40px; color: white; font-size: 18px; line-height: 1.6;width: 700px;padding-left: 130px;margin-top: -80px;">
+  Ứng dụng sử dụng công nghệ trí tuệ nhân tạo (AI) kết hợp với thị giác máy tính để tự động nhận diện giới tính và độ tuổi từ ảnh hoặc webcam. Với tốc 
+  độ xử lý nhanh và độ chính xác cao, hệ thống được ứng dụng trong các lĩnh vực như giám sát an ninh, marketing, giáo dục và nghiên cứu xã hội. Chúng tôi
+   cam kết bảo mật thông tin và quyền riêng tư của người dùng, đồng thời cung cấp trải nghiệm thân thiện và dễ sử dụng.
+</div>
 
-    <br><button type="submit">🔍 Analyze</button>
-  </form>
+<script>
+  let currentIndex = 0;
+  const slides = document.querySelectorAll('.slide');
+  let slideInterval = setInterval(() => moveSlide(1), 4000);
 
-  {% if filename %}
-    <h3>Results:</h3>
-    <img src="{{ url_for('static', filename='uploads/' + filename) }}" width="400">
-    <ul>
-      {% for r in results %}
-        <li>{{ r }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+  function showSlide(index) {
+    const slidesContainer = document.querySelector('.slides');
+    if (index >= slides.length) currentIndex = 0;
+    else if (index < 0) currentIndex = slides.length - 1;
+    else currentIndex = index;
+    slidesContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
+  }
+
+  function moveSlide(step) {
+    showSlide(currentIndex + step);
+    clearInterval(slideInterval);
+    slideInterval = setInterval(() => moveSlide(1), 4000);
+  }
+
+  const video = document.getElementById('camera');
+  const canvas = document.getElementById('canvas');
+  const overlay = document.getElementById('overlay');
+  const ctx = canvas.getContext('2d');
+  const octx = overlay.getContext('2d');
+  let intervalId;
+
+  function switchMode(mode) {
+    document.getElementById('upload_input').style.display = mode === 'upload' ? 'block' : 'none';
+    document.getElementById('url_input').style.display = mode === 'url' ? 'block' : 'none';
+    document.getElementById('camera_input').style.display = mode === 'camera' ? 'block' : 'none';
+    document.getElementById('realtime_results').style.display = 'none';
+    document.getElementById('error_message').style.display = 'none';
+    if (mode === 'camera') startCamera(); else stopCamera();
+  }
+
+  function startCamera() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+        intervalId = setInterval(captureAndAnalyze, 1500);
+      })
+      .catch(err => showError('Camera error: ' + err));
+  }
+
+  function stopCamera() {
+    clearInterval(intervalId);
+    if (video.srcObject) {
+      video.srcObject.getTracks().forEach(track => track.stop());
+      video.srcObject = null;
+    }
+  }
+
+  function captureAndAnalyze() {
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      overlay.width = video.videoWidth;
+      overlay.height = video.videoHeight;
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = canvas.toDataURL('image/jpeg');
+
+      fetch('/realtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_base64: imageData })
+      })
+      .then(res => res.json())
+      .then(data => {
+        octx.clearRect(0, 0, overlay.width, overlay.height);
+        if (data.results && data.results.length > 0) {
+          data.results.forEach(item => {
+            const { x, y, w, h } = item.box;
+            octx.strokeStyle = 'lime';
+            octx.lineWidth = 2;
+            octx.strokeRect(x, y, w, h);
+            octx.fillStyle = 'black';
+            octx.fillRect(x, y - 20, 150, 20);
+            octx.fillStyle = 'white';
+            octx.font = '14px Arial';
+            octx.fillText(item.label, x + 5, y - 5);
+          });
+        }
+      })
+      .catch(err => showError(err.message));
+    }
+  }
+
+  function showError(msg) {
+    const errBox = document.getElementById('error_message');
+    errBox.textContent = msg;
+    errBox.style.display = 'block';
+  }
+
+  function showResults(mode, imageSrc, results) {
+    // Ẩn placeholder
+    document.getElementById(`${mode}-placeholder`).style.display = 'none';
+    
+    // Hiển thị ảnh kết quả
+    const resultImg = document.getElementById(`${mode}-result`);
+    resultImg.src = imageSrc;
+    resultImg.style.display = 'block';
+    
+    // Hiển thị kết quả phân tích
+    const resultsContainer = document.getElementById(`${mode}-results`);
+    const resultsList = resultsContainer.querySelector('.results-list');
+    resultsList.innerHTML = '';
+    
+    results.forEach(result => {
+      const li = document.createElement('li');
+      li.textContent = result;
+      resultsList.appendChild(li);
+    });
+    
+    resultsContainer.style.display = 'block';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener('change', () => switchMode(r.value)));
+    switchMode(document.querySelector('input[name="mode"]:checked').value);
+
+    // Xử lý khi chọn file
+    document.getElementById('file-input').addEventListener('change', function(e) {
+      if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+          showResults('upload', event.target.result, []);
+        };
+        
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Xử lý khi nhập URL
+    document.getElementById('url-input').addEventListener('change', function(e) {
+      if (e.target.value) {
+        showResults('url', e.target.value, []);
+      }
+    });
+
+    document.getElementById('detectionForm').addEventListener('submit', e => {
+      const mode = document.querySelector('input[name="mode"]:checked').value;
+      if (mode === 'camera') {
+        e.preventDefault();
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        document.getElementById('image_base64').value = canvas.toDataURL('image/jpeg');
+        
+        // Hiển thị ảnh chụp từ camera
+        showResults('camera', canvas.toDataURL('image/jpeg'), []);
+        
+        e.target.submit();
+      }
+    });
+
+    // Nếu có kết quả từ server khi trang load
+    {% if filename %}
+      showResults('upload', "{{ url_for('static', filename='uploads/' + filename) }}", [
+        {% for r in results %}
+          "{{ r }}",
+        {% endfor %}
+      ]);
+    {% endif %}
+  });
+
+  window.addEventListener('beforeunload', stopCamera);
+</script>
 </body>
 </html>
