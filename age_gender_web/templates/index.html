@@ -200,6 +200,85 @@
       margin-top: 10px;
       font-weight: bold;
     }
+    .input-mode {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin: 20px 0;
+  }
+
+  .input-mode label {
+    position: relative;
+    padding-left: 35px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    transition: color 0.3s ease;
+  }
+
+  .input-mode input[type="radio"] {
+    display: none;
+  }
+
+  .input-mode label::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    background: #fff;
+    transition: border-color 0.3s ease;
+  }
+
+  .input-mode input[type="radio"]:checked + label::before {
+    border-color: #f7971e;
+  }
+
+  .input-mode input[type="radio"]:checked + label::after {
+    opacity: 1;
+  }
+
+  .input-mode label::after {
+    content: "";
+    position: absolute;
+    left: 7.5px;
+    top: 11.5px;
+    width: 10px;
+    height: 10px;
+    background: #f7971e;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .input-mode label:hover {
+    color: #f7971e;
+  }
+  #url-input {
+    width: 100%;
+    max-width: 370px;
+    padding: 12px 16px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  #url-input:focus {
+    border-color: #f7971e;
+    box-shadow: 0 0 0 3px rgba(247, 151, 30, 0.2);
+  }
+
+  #url-input::placeholder {
+    color: #aaa;
+    font-style: italic;
+  }
     @media (max-width: 768px) {
       .main-section {
         flex-direction: column;
@@ -251,19 +330,41 @@
     <h2>🔍 Detect Age & Gender</h2>
     <form method="POST" enctype="multipart/form-data" id="detectionForm">
       <div class="input-mode">
-        <label><input type="radio" name="mode" value="upload" checked> Upload Image</label>
-        <label><input type="radio" name="mode" value="url"> Image URL</label>
-        <label><input type="radio" name="mode" value="camera"> Webcam</label>
+        <input type="radio" name="mode" value="upload" id="mode-upload" checked>
+        <label for="mode-upload" >Upload Image</label>
+
+        <input type="radio" name="mode" value="url" id="mode-url">
+        <label for="mode-url">Image URL</label>
+
+        <input type="radio" name="mode" value="camera" id="mode-camera">
+        <label for="mode-camera">Webcam</label>
       </div>
 
       <div class="result-wrapper">
         <!-- Upload Input -->
         <div id="upload_input">
-          <div id="upload-placeholder" class="image-placeholder">
+          <div id="upload-placeholder" class="image-placeholder" style="margin-top: 20px;">
             <img src="{{ url_for('static', filename='images/image-gallery.png') }}" alt="Upload image">
             <p>Upload your image here</p>
           </div>
-          <input type="file" name="image" accept="image/*" id="file-input">
+          <label for="file-input" style="
+              display: inline-block;
+              background: linear-gradient(135deg, #f7971e, #ffd200);
+              color: #fff;
+              padding: 10px 20px;
+              font-size: 16px;
+              font-weight: bold;
+              border-radius: 30px;
+              cursor: pointer;
+              box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+              transition: all 0.3s ease;
+              margin-top: 20px;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 18px rgba(0, 0, 0, 0.3)'; this.style.opacity='0.95';"
+            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 14px rgba(0, 0, 0, 0.2)'; this.style.opacity='1';">
+              📁 Choose Image
+            </label>
+            <input type="file" name="image" accept="image/*" id="file-input" style="display: none;">
+
           <img id="upload-result" class="result-img">
           <div id="upload-results" class="results-container">
             <h3>Results:</h3>
@@ -301,7 +402,23 @@
         </div>
       </div>
 
-      <button type="submit" id="analyzeBtn">Analyze</button>
+          <button type="submit" id="analyzeBtn" style="
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+      margin-top: 20px;
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 18px rgba(0, 0, 0, 0.3)'; this.style.opacity='0.95';"
+    onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 14px rgba(0, 0, 0, 0.2)'; this.style.opacity='1';">
+      🚀 Analyze
+    </button>
+
     </form>
 
     <div id="realtime_results" style="display:none;">

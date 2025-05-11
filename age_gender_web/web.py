@@ -81,7 +81,7 @@ def index():
                 input_face = preprocess(face_img)
                 age = int(model_age.predict(input_face)[0][0])
                 gender_score = model_gender.predict(input_face)[0][0]
-                gender = "Male" if gender_score > 0.5 else "Female"
+                gender = "Female" if gender_score > 0.6 else "Male"
                 results.append(f"Age: {age}, Gender: {gender}")
                 cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
                 cv2.putText(image, f"{gender}, {age}", (x, y-10),
@@ -116,7 +116,7 @@ def realtime():
             input_face = preprocess(face_img)
             age = int(model_age.predict(input_face)[0][0])
             gender_score = model_gender.predict(input_face)[0][0]
-            gender = "Male" if gender_score > 0.5 else "Female"
+            gender = "Female" if gender_score > 0.6 else "Male"
             results.append({
                 "label": f"Age: {age}, Gender: {gender}",
                 "box": {"x": int(x), "y": int(y), "w": int(w), "h": int(h)}
@@ -144,7 +144,7 @@ def generate_video():
             input_face = preprocess(face_img)
             age = int(model_age.predict(input_face)[0][0])
             gender_score = model_gender.predict(input_face)[0][0]
-            gender = "Male" if gender_score > 0.5 else "Female"
+            gender = "Female" if gender_score > 0.6 else "Male"
             label = f"{gender}, {age}"
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
             cv2.putText(frame, label, (x, y - 10),
