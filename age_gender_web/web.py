@@ -21,8 +21,8 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-model_age = load_model(os.path.join(BASE_DIR, "..", "model_age.h5"))
-model_gender = load_model(os.path.join(BASE_DIR, "..", "model_gender.h5"))
+model_age = load_model(os.path.join(BASE_DIR, "..", "best_age_model.keras"))
+model_gender = load_model(os.path.join(BASE_DIR, "..", "best_gender_model.keras"))
 
 mp_face_detection = mp.solutions.face_detection
 face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
